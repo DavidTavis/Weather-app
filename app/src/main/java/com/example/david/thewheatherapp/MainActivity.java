@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView sunrise;
     private TextView sunset;
     private TextView updated;
+    private TextView precipitation;
 
     Weather weather = new Weather();
 
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         sunrise = (TextView) findViewById(R.id.riseText);
         sunset = (TextView) findViewById(R.id.setText);
         updated = (TextView) findViewById(R.id.updateText);
+        precipitation = (TextView) findViewById(R.id.precipitationText);
 
         CityPreference cityPreference = new CityPreference(MainActivity.this);
         renderWeatherData(cityPreference.getCity());
@@ -139,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
         sunrise.setText("Sunrise: " + sunriseDate);
         sunset.setText("SunSet: " + sunsetDate);
         updated.setText("Last Updagted: " + updateDate);
+        precipitation.setText("Precipitation: " + weather.clouds.getPrecipitation());
         if (weather.iconData != null) {
             iconView.setImageBitmap(weather.iconData);
         }

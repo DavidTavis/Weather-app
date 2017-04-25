@@ -17,7 +17,7 @@ public class JSONWeatherParser {
     public static Weather getWeather(String data){
         Weather weather = new Weather();
 
-        //createe JSONOblect from data
+        //create JSONObject from data
         try {
             Utils.logInfo(data);
             JSONObject jsonObject = new JSONObject(data);

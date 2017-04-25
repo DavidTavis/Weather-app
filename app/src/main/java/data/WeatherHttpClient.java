@@ -2,11 +2,8 @@ package data;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -65,17 +62,17 @@ public class WeatherHttpClient {
     }
 
     public Bitmap getWeatherImage(String code){
-        HttpURLConnection con = null ;
-        InputStream is = null;
+        HttpURLConnection connection = null ;
+        InputStream inputStream = null;
 
         StringBuilder str = new StringBuilder(Utils.ICON_URL);
         String path = str.append(code).append(".png").toString();
 
         try {
             URL url = new URL(path);
-            con = (HttpURLConnection) url.openConnection();
-            is = con.getInputStream();
-            Bitmap img = BitmapFactory.decodeStream(is);
+            connection = (HttpURLConnection) url.openConnection();
+            inputStream = connection.getInputStream();
+            Bitmap img = BitmapFactory.decodeStream(inputStream);
             return img;
 
         } catch (MalformedURLException e) {
@@ -83,8 +80,15 @@ public class WeatherHttpClient {
         } catch (IOException e) {
             e.printStackTrace();
         }finally {
-            try { is.close(); } catch(Throwable t) {}
-            try { con.disconnect(); } catch(Throwable t) {}
+
+            try {
+                inputStream.close(); }
+            catch(Throwable t) {}
+
+            try {
+                connection.disconnect();
+            } catch(Throwable t) {}
+
         }
 
         return null;
