@@ -25,34 +25,41 @@ public class WeatherHttpClient {
 
         try {
 
-            URL url = new URL(Utils.BASE_URL + place);
-            Utils.logInfo(url.toString());
+            URL url = new URL(Utils.BASE_URL);
+
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.connect();
 
-            //read the response
-            StringBuffer stringBuffer = new StringBuffer();
+            int responseCode = connection.getResponseCode();
 
-            inputStream = connection.getInputStream();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+//            Utils.logInfo("" + responseCode);
 
-            String line = null;
+            if(responseCode == HttpURLConnection.HTTP_OK){
+                //read the response
+                StringBuffer stringBuffer = new StringBuffer();
 
-            while ((line = bufferedReader.readLine()) != null){
-                stringBuffer.append(line + "\r\n");
+                inputStream = connection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line = null;
+
+                while ((line = bufferedReader.readLine()) != null){
+                    stringBuffer.append(line + "\r\n");
+                }
+
+                inputStream.close();
+                connection.disconnect();
+
+                return stringBuffer.toString();
             }
 
-            inputStream.close();
-            connection.disconnect();
-
-            return stringBuffer.toString();
 
         } catch (IOException e) {
             e.printStackTrace();
-            Utils.logInfo("No HttpURLConnection");
+            Utils.logInfo("No HttpURLConnection!!!!");
         }finally {
             try { inputStream.close(); } catch(Throwable t) {}
             try { connection.disconnect(); } catch(Throwable t) {}

@@ -11,7 +11,8 @@ import java.net.PortUnreachableException;
 public class Weather {
     public  Place place;
     public Bitmap iconData;
-    public CurrentCondition currentCondition = new CurrentCondition();
+    public CurrentCondition currentCondition;
+//    public CurrentCondition currentCondition = new CurrentCondition();
     public Temperature temperature = new Temperature();
     public Wind wind = new Wind();
     public Snow snow = new Snow();

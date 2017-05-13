@@ -1,12 +1,12 @@
 package data;
 
+import android.content.Context;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import Util.Utils;
-import model.Place;
-import model.Weather;
 
 /**
  * Created by TechnoA on 22.04.2017.
@@ -14,58 +14,58 @@ import model.Weather;
 
 public class JSONWeatherParser {
 
-    public static Weather getWeather(String data){
-        Weather weather = new Weather();
+    private Context context;
 
-        //create JSONObject from data
+    public JSONWeatherParser(Context context) {
+        this.context = context;
+    }
+
+    public void fillDB(String data){
+
         try {
-            Utils.logInfo(data);
+
             JSONObject jsonObject = new JSONObject(data);
+            JSONArray jsonArray = jsonObject.getJSONArray("list");
 
-            Place place = new Place();
+            WeatherRepository repository = new WeatherRepository(context);
+            repository.close();
 
-            //get the coordinate obj
-            JSONObject coordObj = Utils.getObject("coord", jsonObject);
-            place.setLat(Utils.getFloat("lat",coordObj));
-            place.setLon(Utils.getFloat("lon",coordObj));
+            Utils.logInfo("count row = " + repository.count());
+            for (int i = 0; i <jsonArray.length(); i++){
 
-            //get the sys obj
-            JSONObject sysObj = Utils.getObject("sys", jsonObject);
-            place.setCountry(Utils.getString("country", sysObj));
-            place.setLastUpdate(Utils.getLong("dt", jsonObject));
-            place.setSunrise(Utils.getLong("sunrise",sysObj));
-            place.setSunset(Utils.getLong("sunset",sysObj));
-            place.setCity(Utils.getString("name",jsonObject));
-            weather.place = place;
+                JSONObject listEntry = jsonArray.getJSONObject(i);
+                Long dt = Utils.getLong("dt",listEntry);
+                String date = Utils.getString("dt_txt",listEntry);
 
-            // get the weather info
-            JSONArray jsonArray = jsonObject.getJSONArray("weather");
-            JSONObject jsonWeather = jsonArray.getJSONObject(0);
-            weather.currentCondition.setWeatherId(Utils.getInt("id",jsonWeather));
-            weather.currentCondition.setDescription(Utils.getString("description",jsonWeather));
-            weather.currentCondition.setCondition(Utils.getString("main",jsonWeather));
-            weather.currentCondition.setIcon(Utils.getString("icon",jsonWeather));
+                JSONObject wind = Utils.getObject("wind",listEntry);
+                float speed = Utils.getFloat("speed", wind);
+                float deg = Utils.getFloat("deg", wind);
 
-            JSONObject mainOdj = Utils.getObject("main", jsonObject);
-            weather.currentCondition.setHumidity(Utils.getInt("humidity", mainOdj));
-            weather.currentCondition.setPressure(Utils.getInt("pressure", mainOdj));
-            weather.currentCondition.setMinTemp(Utils.getFloat("temp_min", mainOdj));
-            weather.currentCondition.setMaxTemp(Utils.getFloat("temp_max", mainOdj));
-            weather.currentCondition.setTemperature(Utils.getDouble("temp", mainOdj));
+                JSONObject main = Utils.getObject("main",listEntry);
+                float temp = Utils.getFloat("temp",main);
+                float tempMin = Utils.getFloat("temp_min",main);
+                float tempMax = Utils.getFloat("temp_max",main);
+                float pressure = Utils.getFloat("pressure",main);
+                float humidity = Utils.getFloat("humidity",main);
 
-            JSONObject windOdj = Utils.getObject("wind", jsonObject);
-            weather.wind.setDeg(Utils.getFloat("deg",windOdj));
-            weather.wind.setSpeed(Utils.getFloat("speed",windOdj));
+                JSONArray weatherArray = listEntry.getJSONArray("weather");
+                JSONObject weather = weatherArray.getJSONObject(0);
+                String mainWeater = Utils.getString("main",weather);
+                String description = Utils.getString("description",weather);
+                String icon = Utils.getString("icon", weather);
 
-            JSONObject cloudOdj = Utils.getObject("clouds", jsonObject);
-            weather.clouds.setPrecipitation(Utils.getInt("all",cloudOdj));
+                // write to DataBase
+                repository.addDataToDB(date, speed, deg, temp, tempMax, tempMin, pressure, humidity, mainWeater, description, icon);
 
-            return weather;
+            }
+            Utils.logInfo("count row = " +repository.count());
+
+            Utils.logInfo("Service end");
 
         } catch (JSONException e) {
             e.printStackTrace();
-            return null;
         }
 
     }
+
 }

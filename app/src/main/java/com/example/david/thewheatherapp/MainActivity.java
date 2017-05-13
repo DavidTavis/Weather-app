@@ -1,6 +1,7 @@
 package com.example.david.thewheatherapp;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -58,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
         precipitation = (TextView) findViewById(R.id.precipitationText);
 
         CityPreference cityPreference = new CityPreference(MainActivity.this);
-        renderWeatherData(cityPreference.getCity());
+        Intent intentService = new Intent(this,WeatherService.class);
+        startService(intentService);
     }
 
     private void showInputDialog(){
@@ -77,41 +79,10 @@ public class MainActivity extends AppCompatActivity {
 
                 String newCity = cityPreference.getCity();
 
-                renderWeatherData(newCity);
+//                renderWeatherData(newCity);
             }
         });
         builder.show();
-    }
-    public  void renderWeatherData(String city){
-
-        WeatherTask weatherTask = new WeatherTask();
-        weatherTask.execute(new String[]{city});
-    }
-
-    private class WeatherTask extends AsyncTask<String, Void, Weather>{
-
-        @Override
-        protected Weather doInBackground(String... params) {
-
-            Utils.logInfo(params[0]);
-            String data = (new WeatherHttpClient()).getWeatherData(params[0]);
-            if(data==null){
-                return null;
-            }
-            weather = JSONWeatherParser.getWeather(data);
-
-            weather.iconData = (new WeatherHttpClient()).getWeatherImage(weather.currentCondition.getIcon());
-
-            return weather;
-
-        }
-
-        @Override
-        protected void onPostExecute(Weather weather) {
-            super.onPostExecute(weather);
-            if(weather==null) return;
-            updateUI();
-        }
     }
 
     public void updateUI(){
