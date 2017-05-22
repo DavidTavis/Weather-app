@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import Util.Utils;
+import model.WeatherModel;
 
 /**
  * Created by TechnoA on 22.04.2017.
@@ -20,7 +21,9 @@ public class JSONWeatherParser {
         this.context = context;
     }
 
-    public void fillDB(String data){
+    public WeatherModel fillDB(String data){
+
+        WeatherModel currentWeatherModel = null;
 
         try {
 
@@ -33,8 +36,8 @@ public class JSONWeatherParser {
             Utils.logInfo("count row = " + repository.count());
             for (int i = 0; i <jsonArray.length(); i++){
 
+                WeatherModel weatherModel = new WeatherModel();
                 JSONObject listEntry = jsonArray.getJSONObject(i);
-                Long dt = Utils.getLong("dt",listEntry);
                 String date = Utils.getString("dt_txt",listEntry);
 
                 JSONObject wind = Utils.getObject("wind",listEntry);
@@ -54,18 +57,34 @@ public class JSONWeatherParser {
                 String description = Utils.getString("description",weather);
                 String icon = Utils.getString("icon", weather);
 
+                weatherModel.setDate(date);
+                weatherModel.setSpeed(speed);
+                weatherModel.setDeg(deg);
+                weatherModel.setTemp(temp);
+                weatherModel.setTempMax(tempMax);
+                weatherModel.setTempMin(tempMin);
+                weatherModel.setPressure(pressure);
+                weatherModel.setHumidity(humidity);
+                weatherModel.setMainWeather(mainWeater);
+                weatherModel.setDescription(description);
+                weatherModel.setIcon(icon);
+
+                if(i==0){
+                    currentWeatherModel = weatherModel;
+                }
                 // write to DataBase
-                repository.addDataToDB(date, speed, deg, temp, tempMax, tempMin, pressure, humidity, mainWeater, description, icon);
+                repository.addDataToDB(weatherModel);
 
             }
             Utils.logInfo("count row = " +repository.count());
 
-            Utils.logInfo("Service end");
+            return currentWeatherModel;
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        return currentWeatherModel;
     }
 
 }

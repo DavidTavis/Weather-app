@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
 import Util.Utils;
+import model.WeatherModel;
 
 public class WeatherRepository {
 
@@ -67,26 +68,31 @@ public class WeatherRepository {
 
     }
 
-    public void addDataToDB(String date, float speed, float deg, float temp, float tempMax, float tempMin, float pressure, float humidity, String mainWeather, String description, String icon){
+    public void addDataToDB(WeatherModel weatherModel){
 
         SQLiteDatabase db = sqlite.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(COLUMN_DATE, date);
-        values.put(COLUMN_SPEED, speed);
-        values.put(COLUMN_DEG, deg);
-        values.put(COLUMN_TEMP, temp);
-        values.put(COLUMN_TEMPMAX, tempMax);
-        values.put(COLUMN_TEMPMIN, tempMin);
-        values.put(COLUMN_PRESSURE, pressure);
-        values.put(COLUMN_HUMIDITY, humidity);
-        values.put(COLUMN_MAINWEATHER, mainWeather);
-        values.put(COLUMN_DESCRIPTION, description);
-        values.put(COLUMN_ICON, icon);
+        values.put(COLUMN_DATE, weatherModel.getDate());
+        values.put(COLUMN_SPEED, weatherModel.getSpeed());
+        values.put(COLUMN_DEG, weatherModel.getDeg());
+        values.put(COLUMN_TEMP, weatherModel.getTemp());
+        values.put(COLUMN_TEMPMAX, weatherModel.getTempMax());
+        values.put(COLUMN_TEMPMIN, weatherModel.getTempMin());
+        values.put(COLUMN_PRESSURE, weatherModel.getPressure());
+        values.put(COLUMN_HUMIDITY, weatherModel.getHumidity());
+        values.put(COLUMN_MAINWEATHER, weatherModel.getMainWeather());
+        values.put(COLUMN_DESCRIPTION, weatherModel.getDescription());
+        values.put(COLUMN_ICON, weatherModel.getIcon());
 
         long id = db.insert(TABLE_NAME, null, values);
 
-        Utils.logInfo("Row id = " + id +  " date = " + date + " speed = " + speed + " deg = " + deg + " temp = " + temp + " tempMax = " + tempMax + " tempMin = " + tempMin + " pressure = " + pressure + " humidity = " + humidity + " mainWeather = " + mainWeather + " description = " + description + " icon = " + icon);
+        Utils.logInfo("Row id = " + id +  " date = " + weatherModel.getDate() + " speed = " + weatherModel.getSpeed()
+                + " deg = " +  weatherModel.getDeg() + " temp = " + weatherModel.getTemp()
+                + " tempMax = " + weatherModel.getTempMax() + " tempMin = " + weatherModel.getTempMin()
+                + " pressure = " + weatherModel.getPressure() + " humidity = " + weatherModel.getHumidity()
+                + " mainWeather = " + weatherModel.getMainWeather() + " description = " + weatherModel.getDescription()
+                + " icon = " +  weatherModel.getIcon());
     }
 
     public void close(){

@@ -7,6 +7,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -46,6 +47,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        findView();
+
+        startingService();
+
+    }
+
+    private void startingService(){
+
+        CityPreference cityPreference = new CityPreference(MainActivity.this);
+        Intent intentService = new Intent(this,WeatherService.class);
+        startService(intentService);
+
+    }
+
+    private void findView(){
+
         cityName = (TextView) findViewById(R.id.cityText);
         iconView = (ImageView) findViewById(R.id.thumbnailIcon);
         temp = (TextView) findViewById(R.id.tempText);
@@ -58,9 +75,6 @@ public class MainActivity extends AppCompatActivity {
         updated = (TextView) findViewById(R.id.updateText);
         precipitation = (TextView) findViewById(R.id.precipitationText);
 
-        CityPreference cityPreference = new CityPreference(MainActivity.this);
-        Intent intentService = new Intent(this,WeatherService.class);
-        startService(intentService);
     }
 
     private void showInputDialog(){
