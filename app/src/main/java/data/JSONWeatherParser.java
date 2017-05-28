@@ -1,6 +1,8 @@
 package data;
 
 import android.content.Context;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,17 +23,15 @@ public class JSONWeatherParser {
         this.context = context;
     }
 
-    public WeatherModel fillDB(String data){
+    public void fillDB(String data){
 
-        WeatherModel currentWeatherModel = null;
+        WeatherRepository repository = new WeatherRepository(context);
+        repository.close();
 
         try {
 
             JSONObject jsonObject = new JSONObject(data);
             JSONArray jsonArray = jsonObject.getJSONArray("list");
-
-            WeatherRepository repository = new WeatherRepository(context);
-            repository.close();
 
             Utils.logInfo("count row = " + repository.count());
             for (int i = 0; i <jsonArray.length(); i++){
@@ -69,22 +69,26 @@ public class JSONWeatherParser {
                 weatherModel.setDescription(description);
                 weatherModel.setIcon(icon);
 
-                if(i==0){
-                    currentWeatherModel = weatherModel;
-                }
                 // write to DataBase
                 repository.addDataToDB(weatherModel);
 
             }
             Utils.logInfo("count row = " +repository.count());
 
-            return currentWeatherModel;
-
         } catch (JSONException e) {
             e.printStackTrace();
+        }finally {
+            if(repository.count()>0){
+                sendBroadcast();
+            }
         }
 
-        return currentWeatherModel;
+    }
+
+    private void sendBroadcast() {
+        Intent intent = new Intent("myBroadcastIntent");
+        intent.putExtra("DataBaseIsFull", true);
+        LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
 }

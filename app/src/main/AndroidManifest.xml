@@ -10,6 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -17,7 +18,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".WeatherService"/>
+
+        <service
+            android:name="service.WeatherService"
+            android:enabled="true">
+        </service>
+
+        <receiver android:name="receiver.RestartServiceReceiver">
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="com.animation.david.thewheatherapp.RestartService"></action>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

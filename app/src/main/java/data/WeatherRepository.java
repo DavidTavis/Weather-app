@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
+import java.util.ArrayList;
+
 import Util.Utils;
 import model.WeatherModel;
 
@@ -93,6 +95,86 @@ public class WeatherRepository {
                 + " pressure = " + weatherModel.getPressure() + " humidity = " + weatherModel.getHumidity()
                 + " mainWeather = " + weatherModel.getMainWeather() + " description = " + weatherModel.getDescription()
                 + " icon = " +  weatherModel.getIcon());
+    }
+
+    public WeatherModel firstRow(){
+
+        SQLiteDatabase db = sqlite.getReadableDatabase();
+        String query = String.format("SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, MIN(%s) as _id  FROM %s", COLUMN_DATE, COLUMN_SPEED,
+                COLUMN_DEG, COLUMN_TEMP, COLUMN_TEMPMAX, COLUMN_TEMPMIN, COLUMN_PRESSURE, COLUMN_HUMIDITY,
+                COLUMN_MAINWEATHER, COLUMN_DESCRIPTION, COLUMN_ICON, COLUMN_ID,  TABLE_NAME);
+        Cursor cursor = db.rawQuery(query,null);
+        cursor.moveToFirst();
+
+        WeatherModel weatherModel= new WeatherModel();
+        weatherModel.setDate(cursor.getString(cursor.getColumnIndex(COLUMN_DATE)));
+        weatherModel.setSpeed(cursor.getFloat(cursor.getColumnIndex(COLUMN_SPEED)));
+        weatherModel.setDeg(cursor.getFloat(cursor.getColumnIndex(COLUMN_DEG)));
+        weatherModel.setTemp(cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMP)));
+        weatherModel.setTempMax(cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMPMAX)));
+        weatherModel.setTempMin(cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMPMIN)));
+        weatherModel.setPressure(cursor.getFloat(cursor.getColumnIndex(COLUMN_PRESSURE)));
+        weatherModel.setHumidity(cursor.getFloat(cursor.getColumnIndex(COLUMN_HUMIDITY)));
+        weatherModel.setMainWeather(cursor.getString(cursor.getColumnIndex(COLUMN_MAINWEATHER)));
+        weatherModel.setDescription(cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)));
+        weatherModel.setIcon(cursor.getString(cursor.getColumnIndex(COLUMN_ICON)));
+
+        return weatherModel;
+    }
+
+    public ArrayList<WeatherModel> readDB(){
+
+        SQLiteDatabase db = sqlite.getReadableDatabase();
+        String query = String.format("SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s FROM %s", COLUMN_DATE, COLUMN_SPEED,
+                COLUMN_DEG, COLUMN_TEMP, COLUMN_TEMPMAX, COLUMN_TEMPMIN, COLUMN_PRESSURE, COLUMN_HUMIDITY,
+                COLUMN_MAINWEATHER, COLUMN_DESCRIPTION, COLUMN_ICON, COLUMN_ID,  TABLE_NAME);
+        Cursor cursor = db.rawQuery(query,null);
+
+        ArrayList<WeatherModel> weatherList = new ArrayList<>();
+
+        String currentDay = "";
+        int currentMinDayTemp = Integer.MAX_VALUE;
+        int currentMaxDayTemp = Integer.MIN_VALUE;
+
+        while(cursor.moveToNext()){
+
+            String date = cursor.getString(cursor.getColumnIndex(COLUMN_DATE));
+
+            if (!currentDay.equals(date.substring(8, 10))){
+                currentDay = date.substring(8, 10);
+                currentMinDayTemp = Integer.MAX_VALUE;
+                currentMaxDayTemp = Integer.MIN_VALUE;
+            }
+
+            int minDayTemp = (int) cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMPMIN));
+            int maxDayTemp = (int) cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMPMAX));
+
+            if(minDayTemp < currentMinDayTemp) currentMinDayTemp = minDayTemp;
+            if(maxDayTemp > currentMaxDayTemp) currentMaxDayTemp = maxDayTemp;
+
+            if(!date.substring(11, 13).equals("15")){
+                continue;
+            }
+
+            WeatherModel weatherModel= new WeatherModel();
+
+            weatherModel.setDate(date);
+            weatherModel.setSpeed(cursor.getFloat(cursor.getColumnIndex(COLUMN_SPEED)));
+            weatherModel.setDeg(cursor.getFloat(cursor.getColumnIndex(COLUMN_DEG)));
+            weatherModel.setTemp(cursor.getFloat(cursor.getColumnIndex(COLUMN_TEMP)));
+            weatherModel.setTempMax(currentMaxDayTemp);
+            weatherModel.setTempMin(currentMinDayTemp);
+            weatherModel.setPressure(cursor.getFloat(cursor.getColumnIndex(COLUMN_PRESSURE)));
+            weatherModel.setHumidity(cursor.getFloat(cursor.getColumnIndex(COLUMN_HUMIDITY)));
+            weatherModel.setMainWeather(cursor.getString(cursor.getColumnIndex(COLUMN_MAINWEATHER)));
+            weatherModel.setDescription(cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)));
+            weatherModel.setIcon(cursor.getString(cursor.getColumnIndex(COLUMN_ICON)));
+
+            weatherList.add(weatherModel);
+        }
+
+        return weatherList;
+
     }
 
     public void close(){

@@ -25,7 +25,11 @@ public class WeatherHttpClient {
 
         try {
 
-            URL url = new URL(Utils.BASE_URL);
+            StringBuilder ref = new StringBuilder();
+            ref.append(Utils.BASE_URL_PART_ONE).append(place).append(Utils.BASE_URL_PART_TWO);
+            Utils.logInfo("REF = " + ref);
+
+            URL url = new URL(ref.toString());
 
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");

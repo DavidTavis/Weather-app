@@ -1,8 +1,14 @@
-package com.example.david.thewheatherapp;
+package service;
 
-import android.app.IntentService;
+import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import Util.Utils;
 import data.JSONWeatherParser;
@@ -12,38 +18,81 @@ import data.WeatherHttpClient;
  * Created by TechnoA on 13.05.2017.
  */
 
-public class WeatherService extends IntentService {
+public class WeatherService extends Service {
+
+    private Timer timer;
+    private MyServiceTask myServiceTask;
+
+    public WeatherService(Context context) {
+        super();
+    }
 
     public WeatherService() {
-        super("WeatherService");
+        super();
     }
 
     @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
 
         String city = intent.getStringExtra("city");
-        Utils.logInfo("CITY = " + city);
+        startTimer(city);
+        return START_STICKY;
+    }
 
-        // getting JSON response
-        String responseJSON = (new WeatherHttpClient()).getWeatherData(city);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Utils.logInfo("onDestroy service");
+        Intent broadcastIntent = new Intent("com.animation.david.thewheatherapp.RestartService");
+        sendBroadcast(broadcastIntent);
+        stopTimerTask();
+    }
 
-//        while(true) {
-//
-//            //parsing data and filling DB
-//            (new JSONWeatherParser(this)).fillDB(responseJSON);
-//
-//            try {
-//                //sleep 3 hours
-//                TimeUnit.SECONDS.sleep(3600*3);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+    public void startTimer(String city) {
 
-        //parsing data and filling DB
-        (new JSONWeatherParser(this)).fillDB(responseJSON);
+        timer = new Timer();
+        timer.schedule(new MyServiceTask(city), 0, 600000);
 
     }
 
+    private class MyServiceTask extends TimerTask{
+
+        private String city;
+
+        public MyServiceTask(String city) {
+            this.city = city;
+        }
+
+        @Override
+        public void run() {
+            Thread myThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String responseJSON = (new WeatherHttpClient()).getWeatherData(city);
+
+                    (new JSONWeatherParser(getApplicationContext())).fillDB(responseJSON);
+
+                    Utils.logInfo("Starting the MyServiceTask. Parsing data. Filling DB");
+                }
+            });
+            myThread.start();
+
+        }
+    }
+
+    public void stopTimerTask() {
+        //stop the timer, if it's not already null
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
 }

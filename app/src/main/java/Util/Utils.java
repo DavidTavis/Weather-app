@@ -11,7 +11,9 @@ import org.json.JSONObject;
 
 public class Utils {
 
-    public static final String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast?q=London,us&appid=f8c690ef9002bb5fac771397f582ce12";
+    public static final String BASE_URL_PART_ONE = "http://api.openweathermap.org/data/2.5/forecast?q=";
+    public static final String BASE_URL_PART_TWO = "&appid=f8c690ef9002bb5fac771397f582ce12";
+
     public static final String ICON_URL = "http://openweathermap.org/img/w/";
 
     public static JSONObject getObject(String tagName, JSONObject jsonObject) throws JSONException{

@@ -1,5 +1,7 @@
 package model;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by TechnoA on 22.05.2017.
  */
@@ -17,6 +19,15 @@ public class WeatherModel {
     private String mainWeather;
     private String description;
     private String icon;
+    private Bitmap pictureIcon;
+
+    public void setPictureIcon(Bitmap pictureIcon){
+        this.pictureIcon = pictureIcon;
+    }
+
+    public Bitmap getPictureIcon(){
+        return pictureIcon;
+    }
 
     public String getDate() {
         return date;
