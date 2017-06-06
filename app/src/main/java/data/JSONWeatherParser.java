@@ -33,7 +33,6 @@ public class JSONWeatherParser {
             JSONObject jsonObject = new JSONObject(data);
             JSONArray jsonArray = jsonObject.getJSONArray("list");
 
-            Utils.logInfo("count row = " + repository.count());
             for (int i = 0; i <jsonArray.length(); i++){
 
                 WeatherModel weatherModel = new WeatherModel();
@@ -73,7 +72,6 @@ public class JSONWeatherParser {
                 repository.addDataToDB(weatherModel);
 
             }
-            Utils.logInfo("count row = " +repository.count());
 
         } catch (JSONException e) {
             e.printStackTrace();

@@ -93,9 +93,5 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="31dp" />
 
-    <customView.TextViewHelveticaLight
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin"
-        android:text="@string/large_text" />
+
 </RelativeLayout>

@@ -1,13 +1,24 @@
 package com.example.david.thewheatherapp;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.ResultReceiver;
+import android.provider.SyncStateContract;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -16,24 +27,43 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import Util.Utils;
 import adapter.WeatherAdapter;
+import constants.Constants;
 import data.CityPreference;
 import data.WeatherHttpClient;
 import data.WeatherRepository;
 import model.WeatherModel;
+import service.FetchAddressIntentService;
 import service.WeatherService;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    private int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     private ListView weatherListView;
     private TextView place;
     private TextView temp;
@@ -47,25 +77,120 @@ public class MainActivity extends AppCompatActivity {
     WeatherAdapter mAdapter;
     private WeatherService mWeatherService;
     private Intent mIntentService;
-    String city;
+    private LocationManager locationManager;
+
+    private AddressResultReceiver mResultReceiver;
+    protected GoogleApiClient mGoogleApiClient;
+    protected Location mLastLocation;
+    protected String mAddressOutput;
+
+    private String currentCity = null;
+    String city = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.content_scrolling);
 
+        setContentView(R.layout.content_scrolling);
         findView();
+
+        registeringReceiver();
+
+        mResultReceiver = new AddressResultReceiver(new Handler());
+        mAddressOutput = "";
+
+        buildGoogleApiClient();
 
         mAdapter = new WeatherAdapter(this, new ArrayList<WeatherModel>());
         weatherListView.setAdapter(mAdapter);
 
-        CityPreference cityPreference = new CityPreference(MainActivity.this);
-        city = cityPreference.getCity();
-        startingService(city);
+    }
 
-        registeringReceiver();
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
 
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Utils.logInfo("Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
+    }
+
+    public void onDisconnected() {
+        Utils.logInfo("Disconnected");
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Utils.logInfo("Connection suspended");
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        // Gets the best and most recent location currently available, which may be null
+        // in rare cases when a location is not available.
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            // Determine whether a Geocoder is available.
+            Utils.logInfo("onConnected");
+            if(city == null) {
+                startIntentService();
+            }
+        }
+
+    }
+
+    protected void startIntentService() {
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, mLastLocation);
+        startService(intent);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+
+        if (mGoogleApiClient.isConnected() && mLastLocation != null) {
+            startIntentService();
+        }
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+    private class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        /**
+         *  Receives data sent from FetchAddressIntentService and updates the UI in MainActivity.
+         */
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string or an error message sent from the intent service.
+            city = resultData.getString(Constants.RESULT_DATA_KEY);
+
+            CityPreference pref = new CityPreference(getApplicationContext());
+            pref.setCity(city);
+
+            Utils.logInfo("Found location - " + city);
+            startingService(pref.getCity());
+
+        }
     }
 
     private class AsyncCurrentWeather extends AsyncTask<WeatherModel,Void,WeatherModel>{
@@ -127,14 +252,12 @@ public class MainActivity extends AppCompatActivity {
     private void startingService(String city){
 
         mWeatherService = new WeatherService(getApplicationContext());
+
         mIntentService = new Intent(this, WeatherService.class);
         mIntentService.putExtra("city", city);
 
-        if (!isMyServiceRunning(mWeatherService.getClass())) {
-            startService(mIntentService);
-        }else{
-            stopService(mIntentService);
-        }
+        startService(mIntentService);
+
     }
 
     private void registeringReceiver(){
@@ -181,7 +304,6 @@ public class MainActivity extends AppCompatActivity {
     private void updateForecast(ArrayList<WeatherModel> weatherList) {
         mAdapter = new WeatherAdapter(this, weatherList);
         weatherListView.setAdapter(mAdapter);
-        Utils.logInfo("updateForecast");
     }
 
     private void updateCurrentWeather(WeatherModel weatherModel){
@@ -217,26 +339,41 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void showInputDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("Change city");
+    public void showInputDialog() {
+        try {
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+        } catch (GooglePlayServicesRepairableException e) {
+            // TODO: Handle the error.
+        } catch (GooglePlayServicesNotAvailableException e) {
+            // TODO: Handle the error.
+        }
+    }
 
-        final EditText cityInput = new EditText(MainActivity.this);
-        cityInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        cityInput.setHint("Moscow,RU");
-        builder.setView(cityInput);
-        builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+
+                city = place.getName().toString();
+                Utils.logInfo("Place: " + city);
+
                 CityPreference cityPreference = new CityPreference(getApplicationContext());
-                cityPreference.setCity(cityInput.getText().toString());
-
-                city = cityPreference.getCity();
+                cityPreference.setCity(city);
 
                 startingService(city);
+
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Utils.logInfo(status.getStatusMessage());
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
             }
-        });
-        builder.show();
+        }
     }
 
     @Override
@@ -251,12 +388,10 @@ public class MainActivity extends AppCompatActivity {
 
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
-                Utils.logInfo("ServiceRunning true");
                 return true;
             }
         }
 
-        Utils.logInfo("ServiceRunning false");
         return false;
 
     }

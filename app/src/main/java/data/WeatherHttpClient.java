@@ -13,24 +13,14 @@ import java.net.URL;
 
 import Util.Utils;
 
-/**
- * Created by TechnoA on 22.04.2017.
- */
-
 public class WeatherHttpClient {
 
-    public String getWeatherData(String place){
+    private String connectionToURL(URL url){
+
         HttpURLConnection connection = null;
         InputStream inputStream = null;
 
         try {
-
-            StringBuilder ref = new StringBuilder();
-            ref.append(Utils.BASE_URL_PART_ONE).append(place).append(Utils.BASE_URL_PART_TWO);
-            Utils.logInfo("REF = " + ref);
-
-            URL url = new URL(ref.toString());
-
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setDoInput(true);
@@ -38,8 +28,6 @@ public class WeatherHttpClient {
             connection.connect();
 
             int responseCode = connection.getResponseCode();
-
-//            Utils.logInfo("" + responseCode);
 
             if(responseCode == HttpURLConnection.HTTP_OK){
                 //read the response
@@ -70,6 +58,40 @@ public class WeatherHttpClient {
         }
 
         return null;
+    }
+
+    public String getWeatherData(String place){
+
+        StringBuilder ref = new StringBuilder();
+        ref.append(Utils.BASE_URL_PART_CITY).append(place).append(Utils.BASE_URL_PART_APPID);
+        Utils.logInfo("REF = " + ref);
+
+        try {
+            URL url = new URL(ref.toString());
+            return connectionToURL(url);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+    public String getWeatherData(float latitude, float longitude){
+
+        StringBuilder ref = new StringBuilder();
+        ref.append(Utils.BASE_URL_PART_LAT).append(latitude).append(Utils.BASE_URL_PART_LON).append(longitude).append(Utils.BASE_URL_PART_APPID);
+        Utils.logInfo("REF = " + ref);
+
+        try {
+            URL url = new URL(ref.toString());
+            return connectionToURL(url);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 
     public Bitmap getWeatherImage(String code){
@@ -105,6 +127,5 @@ public class WeatherHttpClient {
         return null;
 
     }
-
 
 }

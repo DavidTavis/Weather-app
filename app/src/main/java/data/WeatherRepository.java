@@ -89,12 +89,12 @@ public class WeatherRepository {
 
         long id = db.insert(TABLE_NAME, null, values);
 
-        Utils.logInfo("Row id = " + id +  " date = " + weatherModel.getDate() + " speed = " + weatherModel.getSpeed()
-                + " deg = " +  weatherModel.getDeg() + " temp = " + weatherModel.getTemp()
-                + " tempMax = " + weatherModel.getTempMax() + " tempMin = " + weatherModel.getTempMin()
-                + " pressure = " + weatherModel.getPressure() + " humidity = " + weatherModel.getHumidity()
-                + " mainWeather = " + weatherModel.getMainWeather() + " description = " + weatherModel.getDescription()
-                + " icon = " +  weatherModel.getIcon());
+//        Utils.logInfo("Row id = " + id +  " date = " + weatherModel.getDate() + " speed = " + weatherModel.getSpeed()
+//                + " deg = " +  weatherModel.getDeg() + " temp = " + weatherModel.getTemp()
+//                + " tempMax = " + weatherModel.getTempMax() + " tempMin = " + weatherModel.getTempMin()
+//                + " pressure = " + weatherModel.getPressure() + " humidity = " + weatherModel.getHumidity()
+//                + " mainWeather = " + weatherModel.getMainWeather() + " description = " + weatherModel.getDescription()
+//                + " icon = " +  weatherModel.getIcon());
     }
 
     public WeatherModel firstRow(){
